@@ -1,0 +1,15 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+table {
+  border-collapse: collapse;
+  background-color: lightgray;
+}
+.task-row td {
+  padding: 0.5em;
+}
+.progressbar {
+  width: 100%;
+}
