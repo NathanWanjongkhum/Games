@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="dark.css" />
+  <script type="module" src="main.js" defer></script>
+  <!-- <script type="module" src="tests.js" defer></script> -->
+  <link rel="shortcut icon" href="images/logos.png">
+  <title>Progress Knight Clone</title>
+</head>
+
+<body class="dark">
+  <!-- Overview -->
+  <!-- The main issue with Progress Knight is its hard coded approach.
+  Adding any new content requires adding it to all dependinces making it a chore to add features.
+  Thus a heavier usage of dynamic content in this refactor -->
+
+  <template id="task-row-template">
+    <tr class="task-row">
+      <td>
+        <div class="progressbar">
+          <div class="progressbar-fill"></div>
+          <span class="progressbar-text"></span>
+        </div>
+      </td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+  </template>
+
+  <div class="header">
+    <img src="images/logos.png" alt="logos" />
+    <h1>Progress Knight Clone</h1>
+  </div>
+  <div id="main">
+    <div id="info-panel" class="panel">
+      <span id="age"></span>
+      <div>
+        <button id="pause-button">Pause</button>
+        <ul id="automation"></ul>
+      </div>
+      <div class="income-info-container">
+        <span id="income-net"></span>
+        <span id="income-gain"></span>
+        <span id="income-loss"></span>
+      </div>
+      <!-- Active tasks (jobs, skills) dynamically added incase of additional instances -->
+      <!-- New resources (evil, essence) dynamically added incase of additional instances -->
+    </div>
+    <div id="main-panel">
+      <div id="tab-wrapper">
+        <nav role="tablist" id="navbar" class="panel">
+          <!-- Dynamically filled with links from tab-content -->
+          <!-- tabSwitch() isnt in file scope so needs to be generated in js -->
+          <!-- Removes dependency so new tab-content can be added without worry -->
+        </nav>
+
+        <div role="tabpanel" aria-labelledby="jobs" class="panel">
+          <table id="jobs-table"></table>
+        </div>
+        <div role="tabpanel" aria-labelledby="skills" class="panel" hidden>
+          <table id="skills-table"></table>
+        </div>
+        <div role="tabpanel" aria-labelledby="shop" class="panel" hidden>
+          <table id="items-table"></table>
+        </div>
+        <div role="tabpanel" aria-labelledby="settings" class="panel" hidden>
+          <h2>Import/export save</h2>
+          <button id="import-button">Import</button>
+          <button id="export-button">Export</button>
+          <form style="margin-top: 16px">
+            <input id="importExportBox" type="text"></input>
+          </form>
+          <h2>Hard reset game</h2>
+          <button id="reset-button">Reset</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+
+</html>
