@@ -1,24 +1,24 @@
-import { skillBaseData } from "./Base_Data.js";
+// Dependencies
+import { stylingData, tasksBase } from "./Base_Data.js";
 import Task from "./Task.js";
 
+// DOM Cache
 const taskRowTemplate = document.getElementById("task-row-template");
+const rowHeaderTemplate = document.getElementById("row-header-template");
 
 const ageText = document.getElementById("age");
 const pauseButton = document.getElementById("pause-button");
 const navbar = document.getElementById("navbar");
-
-const skillsTable = document.getElementById("skills-table");
 const importExportBox = document.getElementById("importExportBox");
 
-// Depopulate namespace, simplifies names, packages related info
 const tabsCollection = {
+  // Depopulate namespace, simplifies names, packages related info
   wrapper: null,
   links: [],
   panels: [],
 };
 
-var paused = false;
-
+// Game state
 var assets = {
   money: 0,
   age: 14 * 365,
@@ -29,77 +29,111 @@ var tasks = {
   available: {},
 };
 
-function capitalizeFirstLetter(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-}
-function formatAge() {
-  const years = Math.floor(assets.age / 365);
-  const days = Math.round(assets.age % 365);
-  return `Age ${years} Day ${days}`;
-}
+var paused = false;
+
+// Service functions
 function toggleGameFreeze() {
   paused = !paused;
 
   pauseButton.innerText = paused ? "Play" : "Pause";
 }
 
-// Original PK runs at 20/1000 or 1/50 (50fps) so every tick is only 1/3 a day
-const ADJUST_TIME = 1 / 3;
+function capitalizeFirstLetters(string) {
+  const text = string
+    .toLowerCase()
+    .split(" ")
+    .map((s) => s.charAt(0).toUpperCase() + s.substring(1))
+    .join(" ");
 
+  return text;
+}
+function formatAge() {
+  const years = Math.floor(assets.age / 365);
+  const days = Math.round(assets.age % 365);
+  return `Age ${years} Day ${days}`;
+}
+function formatTaskOutput(task) {
+  switch (task.type) {
+    case "skills":
+      return formatEffect(task.getOutput(), task.target);
+    case "jobs":
+      return formatMoney(task.getOutput());
+    default:
+      break;
+  }
+}
+function formatMoney(value) {
+  return value;
+}
+function formatEffect(value, effect) {
+  return `x${value} ${effect}`;
+}
+
+// Continous functions
 function tick() {
   // Potential for setInterval() to collide with itself and delay next execution
   // With requestAnimationFrame() loop on completion or every 1/60 (60fps)
 
-  // Recalculating every loop is wasteful (differance is +/- 0.002) and PK is day dependent anyways
-  // const deltaTime = (timestamp - lastUpdate) / 1000;
-  // An approximated interval also pervents an overrun tick from impacting calculations
-
   if (!paused) {
-    const daysElaspsed = 1;
+    const daysElaspsed = 0.028; // getDaysElapsed();
 
     update(daysElaspsed);
-    render();
   }
 
   requestAnimationFrame(tick);
 }
 function update(daysElaspsed) {
   assets.age += daysElaspsed;
-  console.log(assets.age);
-
   ageText.textContent = formatAge();
 
-  for (const name in tasks.active) {
-    const task = tasks.available[name];
+  updateRows(daysElaspsed);
+}
+function updateRows(daysElaspsed) {
+  for (const group in tasks.active) {
+    const task = tasks.active[group];
 
     task.increaseXp(daysElaspsed);
-    task.update();
+    task.getOutput();
+
+    updateRow(task);
   }
 }
-function render() {
-  for (const name in tasks.available) {
+function updateRow(task) {
+  task.fill.style.width = (task.xp / task.getMaxXp()) * 100 + "%";
+
+  const cells = task.element.children;
+
+  cells[1].textContent = task.level;
+  cells[2].textContent = formatTaskOutput(task);
+  cells[3].textContent = task.getXpGain();
+  cells[4].textContent = task.getXpLeft();
+  if (task.highestLevel > 0) cells[5].textContent = task.highestLevel;
+}
+// Tabs logic
+function selectTab(key) {
+  try {
+    const selectedTabPanel = tabsCollection.panels.find(
+      (panel) => panel.getAttribute("aria-labelledby") === key
+    );
+
+    if (!selectedTabPanel) throw "unknown panel";
+
+    const selectedTab = tabsCollection.links.find(
+      (link) => link.getAttribute("id") === key
+    );
+
+    if (!selectedTabPanel) throw "unknown tab";
+
+    tabsCollection.panels.forEach((panel) => (panel.hidden = true));
+    tabsCollection.links.forEach((link) =>
+      link.setAttribute("aria-selected", false)
+    );
+
+    selectedTabPanel.hidden = false;
+    selectedTab.setAttribute("aria-selected", true);
+  } catch (error) {
+    console.log(error);
   }
-}
-
-function createSkill(data) {
-  const { name, xpScale, multi, description } = data;
-
-  const task = new Task(name, xpScale);
-  task.element = createSkillRow(task.name);
-
-  task.update();
-
-  tasks.available[task.name] = task;
-}
-function createSkillRow(name) {
-  const row = taskRowTemplate.content.firstElementChild.cloneNode(true);
-  row.id = name;
-  row.classList.add("row");
-  row.classList.add("skill-row");
-
-  skillsTable.appendChild(row);
-
-  return row; // In cases where need elem on init
 }
 
 function createTabs() {
@@ -109,39 +143,122 @@ function createTabs() {
 
   tabsCollection.panels.forEach((panel) => {
     const name = panel.getAttribute("aria-labelledby");
-    createTab(name, navbar);
+    createTab(navbar, name);
   });
 
   tabsCollection.links = Array.from(
     tabsCollection.wrapper.querySelectorAll("[role='tab']")
   );
 }
-function createTab(name, location) {
+function createTab(location, name) {
   const a = document.createElement("a");
   a.setAttribute("role", "tab");
-  a.addEventListener("click", () => switchTab(name));
-  a.innerText = capitalizeFirstLetter(name);
+  a.addEventListener("click", () => selectTab(name));
+  a.innerText = capitalizeFirstLetters(name);
   a.id = name;
 
   location.appendChild(a);
 }
-function switchTab(key) {
-  tabsCollection.panels.forEach((panel) => (panel.hidden = true));
-  tabsCollection.links.forEach((link) =>
-    link.setAttribute("aria-selected", false)
-  );
 
-  const selectedTabPanel = tabsCollection.panels.find(
-    (panel) => panel.getAttribute("aria-labelledby") === key
-  );
-  const selectedTab = tabsCollection.links.find(
-    (link) => link.getAttribute("id") === key
-  );
+// Task Logic
+function getTaskBase(type, group, name) {
+  try {
+    const task = tasksBase[type][group][name];
+    if (!task) throw "missing task";
 
-  selectedTabPanel.hidden = false;
-  selectedTab.setAttribute("aria-selected", true);
+    return task;
+  } catch (error) {
+    console.log(error);
+  }
+}
+function createNewTask(type, group, name) {
+  const data = getTaskBase(type, group, name);
+
+  const taskData = {
+    name: name,
+    type: type,
+    group: group,
+    description: data.description,
+    xpScale: data.xpScale,
+  };
+
+  createTask(taskData, name);
+}
+function createTask(taskData) {
+  if (tasks.available[taskData.name]) return;
+
+  const task = new Task(taskData);
+  setTaskElements(task);
+
+  updateRow(task);
+
+  tasks.available[task.name] = task;
 }
 
+function selectTask(type, name) {
+  try {
+    const previousTask = tasks.active[type];
+    const newTask = tasks.available[name];
+    if (!newTask) throw "missing item";
+
+    if (previousTask) previousTask.fill.classList.remove("current");
+    newTask.fill.classList.add("current");
+
+    // previous task is ref so need to restate
+    tasks.active[type] = newTask;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+function setTaskElements(task) {
+  task.element = createTaskRow(task.type, task.group, task.name);
+  task.fill = task.element.querySelector(".progressbar-fill");
+}
+
+function createTaskGroup(type, group) {
+  const container = document.createElement("tbody");
+  container.id = group;
+
+  createHeaderRow(container, type, group);
+
+  const table = document.getElementById(type + "-table");
+  table.appendChild(container);
+
+  return container;
+}
+function createHeaderRow(location, type, group) {
+  const row = rowHeaderTemplate.content.firstElementChild.cloneNode(true);
+  row.style.backgroundColor = `var(--common)`;
+
+  const children = row.children;
+  children[0].innerText = capitalizeFirstLetters(group);
+  children[2].innerText = stylingData[type];
+
+  location.appendChild(row);
+
+  return row;
+}
+function createTaskRow(type, group, name) {
+  const row = taskRowTemplate.content.firstElementChild.cloneNode(true);
+  row.classList.add("row");
+  row.classList.add(type + "-row");
+
+  row
+    .querySelector(".progressbar")
+    .addEventListener("click", () => selectTask(type, name));
+  row.querySelector(".progressbar-text").innerText =
+    capitalizeFirstLetters(name);
+
+  const rowGroup =
+    document.getElementById(group) || createTaskGroup(type, group);
+
+  rowGroup.appendChild(row);
+
+  return row; // In cases where need elem on init
+}
+
+// Data persistence
 function saveData() {
   // These data structs are unrelated and shouldnt be packaged under a larger struct
   // Instead we can develop with data seperated then bundle then before export
@@ -155,15 +272,31 @@ function saveData() {
   localStorage.setItem("data", window.btoa(JSON.stringify(data)));
 }
 function loadData(string) {
-  if (!string) return;
+  if (!string) return true;
   const data = JSON.parse(window.atob(string));
-  if (!data) return;
+  if (!data) return true;
 
   assets = data["assets"];
-  tasks = data["tasks"];
+
+  for (const categoryName in data["tasks"]) {
+    const taskObjects = data["tasks"][categoryName];
+
+    for (const taskName in taskObjects) {
+      const taskData = taskObjects[taskName];
+
+      createTask(taskData);
+
+      if (categoryName === "active") {
+        selectTask(taskData.type, taskData.name);
+      }
+    }
+  }
+
+  return false;
 }
 function resetData() {
   localStorage.clear();
+  location.reload();
 }
 function importData() {
   loadData(importExportBox.value);
@@ -179,10 +312,13 @@ function exportData() {
 }
 
 (function init() {
-  loadData(localStorage.getItem("data"));
+  // Get saved data
+  const firstSession = loadData(localStorage.getItem("data"));
 
+  // Get DOM
   tabsCollection.wrapper = document.getElementById("tab-wrapper");
 
+  // Add DOM events
   pauseButton.addEventListener("click", toggleGameFreeze);
   document
     .getElementById("import-button")
@@ -192,15 +328,30 @@ function exportData() {
     .addEventListener("click", exportData);
   document.getElementById("reset-button").addEventListener("click", resetData);
 
+  // Get keys
   window.addEventListener("keypress", (event) => {
     if (event.code === "32") toggleGameFreeze();
   });
 
+  // Load Content
   createTabs();
 
-  createSkill(skillBaseData["Concentration"]);
-  createSkill(skillBaseData["Strength"]);
-  createSkill(skillBaseData["Concentration"]);
+  // Set base state
+  selectTab("skills");
 
+  if (firstSession) {
+    // Generate base data
+    createNewTask("jobs", "common", "beggar");
+
+    createNewTask("skills", "fundamentals", "concentration");
+    createNewTask("skills", "fundamentals", "productivity");
+    createNewTask("skills", "combat", "strength");
+
+    selectTask("skills", "concentration");
+    selectTask("jobs", "beggar");
+  }
+
+  // Start loops
+  setInterval(saveData, 1000 * 30);
   requestAnimationFrame(tick);
 })();

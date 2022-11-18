@@ -1,12 +1,30 @@
 export default class Task {
-  constructor(name, xpScale) {
-    this.name = name;
-    this.xpScale = xpScale;
-    this.xp = 0;
-    this.level = 0;
-    this.highestLevel = 0;
+  constructor(props) {
+    this.name = props.name;
+    this.xpScale = props.xpScale;
+    this.xp = props.xp || 0;
+    this.level = props.level || 0;
+    this.highestLevel = props.highestLevel || 0;
+
+    this.type = props.type;
+    this.group = props.group;
+
+    this.target = props.description;
+    this.multipliers = [];
 
     this.element = undefined;
+    this.fill = undefined;
+  }
+
+  getOutput() {
+    return this.multipliers.reduce(
+      (accumulator, value) => accumulator + value,
+      1
+    );
+  }
+
+  getHighestLevelMultiplier() {
+    return 1 + this.highestLevel / 10;
   }
 
   getMaxXp() {
@@ -14,19 +32,12 @@ export default class Task {
       this.xpScale * (this.level + 1) * Math.pow(1.01, this.level)
     );
   }
-
   getXpLeft() {
     return Math.round(this.getMaxXp() - this.xp);
   }
-
-  getHighestLevelMultiplier() {
-    return 1 + this.highestLevel / 10;
-  }
-
   getXpGain() {
     return 10;
   }
-
   increaseXp(daysElaspsed) {
     let excess = this.xp + this.getXpGain() * daysElaspsed;
 
@@ -36,17 +47,5 @@ export default class Task {
     }
 
     this.xp = excess;
-  }
-
-  update() {
-    this.element.querySelector(".progressbar-fill").style.width =
-      (this.getMaxXp - this.xp) * 100 + "%";
-
-    const cells = this.element.children;
-
-    cells[1].textContent = this.level;
-    cells[2].textContent = this.getXpGain();
-    cells[3].textContent = this.getXpLeft();
-    cells[4].textContent = this.highestLevel;
   }
 }

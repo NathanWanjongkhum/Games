@@ -1,9 +1,13 @@
 :root {
   --dark: rgb(31, 31, 31);
-  --fundemental: rgb(85, 166, 48);
+  --common: rgb(85, 166, 48);
   --military: rgb(230, 57, 70);
   --magic: rgb(199, 21, 133);
   --evil: rgb(115, 0, 15);
+  --copper: rgb(161, 92, 47);
+  --silver: rgb(168, 168, 168);
+  --gold: rgb(229, 193, 0);
+  --platinum: rgb(121, 185, 199);
   --important-text-size: large;
   --normal-text-color: white;
   --normal-text-size: 15px;
@@ -34,8 +38,12 @@ body {
   font-size: var(--normal-text-size);
 }
 
-.current {
-  background-color: orange !important;
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+td {
+  padding: 8px 8px;
 }
 
 .progressbar {
@@ -55,6 +63,9 @@ body {
   height: 30px;
   background-color: rgb(46, 148, 231);
 }
+.current {
+  background-color: orange !important;
+}
 
 .item-button {
   background-color: white;
@@ -63,7 +74,6 @@ body {
   height: 40px;
   padding: 8px;
 }
-
 .item-button:hover {
   cursor: pointer;
   background-color: rgb(192, 192, 192);
@@ -73,7 +83,6 @@ body {
   position: relative;
   display: inline-block;
 }
-
 .tooltip .tooltipText {
   visibility: hidden;
   width: 240px;
@@ -92,28 +101,21 @@ body {
   opacity: 0;
   transition: opacity 0.5s;
 }
-
 .tooltip:hover .tooltipText {
   visibility: visible;
   opacity: 0.8;
-}
-
-.inline {
-  display: inline-block;
 }
 
 .panel {
   min-height: 25px;
   background-color: white;
 }
-
 .header img {
   position: static;
   float: left;
   width: 60px;
   height: 60px;
 }
-
 .header h1 {
   position: static;
   top: 2px;
@@ -134,20 +136,25 @@ body {
 #main {
   width: 1220px !important;
   display: flex;
+  align-items: flex-start;
   gap: 20px;
   margin: 0;
   padding: 0;
 }
 #info-panel {
+  padding: 8px 16px !important;
   width: 300px;
   height: fit-content;
 }
-
 #main-panel {
-  width: 100%;
+  width: 900px;
+}
+#main-panel div[role="tabpanel"] {
+  padding: 8px 16px !important;
 }
 #navbar {
   width: 100%;
+  height: 40px;
   margin-bottom: 1em;
 }
 #navbar > a {

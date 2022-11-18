@@ -14,11 +14,17 @@
 </head>
 
 <body class="dark">
-  <!-- Overview -->
-  <!-- The main issue with Progress Knight is its hard coded approach.
-  Adding any new content requires adding it to all dependinces making it a chore to add features.
-  Thus a heavier usage of dynamic content in this refactor -->
-
+  <template id="row-header-template">
+    <tr class="row-header">
+      <td></td> 
+      <td>Level</td>
+      <td></td>
+      <td>Xp/day</td>
+      <td>Xp left</td>
+      <td>Max level</td>
+    </tr>
+  </template>
+  
   <template id="task-row-template">
     <tr class="task-row">
       <td>
