@@ -1,17 +1,20 @@
 export default class Task {
   constructor(props) {
+    // ID: TYPE_GROUP_NAME
     this.name = props.name;
+    this.type = props.type;
+    this.group = props.group;
+
+    // State
     this.xpScale = props.xpScale;
     this.xp = props.xp || 0;
     this.level = props.level || 0;
     this.highestLevel = props.highestLevel || 0;
 
-    this.type = props.type;
-    this.group = props.group;
-
     this.target = props.description;
     this.multipliers = [];
 
+    // Component
     this.element = undefined;
     this.fill = undefined;
   }

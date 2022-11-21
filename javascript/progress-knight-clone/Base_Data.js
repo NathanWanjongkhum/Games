@@ -43,7 +43,6 @@ export const jobBaseData = Object.freeze({
     },
   },
 });
-
 export const skillBaseData = Object.freeze({
   fundamentals: {
     concentration: {
@@ -56,7 +55,7 @@ export const skillBaseData = Object.freeze({
       name: "Productivity",
       xpScale: 100,
       multi: 0.01,
-      description: "job xp",
+      description: "jobs xp",
     },
     bargaining: {
       name: "Bargaining",
@@ -199,9 +198,14 @@ export const skillBaseData = Object.freeze({
   },
 });
 
-export const tasksBase = Object.freeze({
+export const tasksBaseData = Object.freeze({
   jobs: jobBaseData,
   skills: skillBaseData,
+});
+export const taskBaseState = Object.freeze({
+  xp: 0,
+  level: 0,
+  highestLevel: 0,
 });
 
 export const itemBaseData = Object.freeze({
@@ -224,12 +228,7 @@ export const itemBaseData = Object.freeze({
       description: "Skill xp",
     },
     Book: { name: "Book", expense: 10, multi: 1.5, description: "Skill xp" },
-    "Basic Farm Tools": {
-      name: "Basic Farm Tools",
-      expense: 10,
-      multi: 1.5,
-      description: "Farm upgrade",
-    },
+
     Dumbbells: {
       name: "Dumbbells",
       expense: 50,
@@ -240,7 +239,7 @@ export const itemBaseData = Object.freeze({
       name: "Personal squire",
       expense: 200,
       multi: 2,
-      description: "Job xp",
+      description: "jobs xp",
     },
     "Steel longsword": {
       name: "Steel longsword",
