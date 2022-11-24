@@ -96,19 +96,9 @@ function getMultipliers(type, path) {
 }
 
 // State Handlers
-function increaseXp(task, daysElaspsed) {
-  let excess = task.xp + getXpGain(task.id) * daysElaspsed;
-  const MAX_XP = getMaxXp(task);
-
-  while (excess >= MAX_XP) {
-    excess -= MAX_XP;
-    task.level += 1;
-  }
-
-  task.xp = excess;
-}
 function getXpGain(id) {
-  const xpMultipliers = getMultipliers("xp", getPath(id));
+  const PATH = getPath(id);
+  const xpMultipliers = getMultipliers("xp", PATH);
   const xpGain = xpMultipliers.reduce(
     (accumulator, multiplier) => accumulator * (1 + multiplier),
     10
@@ -124,17 +114,6 @@ function getMaxXp(task) {
 function getXpLeft(task) {}
 
 // Component Handlers
-function updateComponent(task) {
-  // task.style.width = (task.xp / getMaxXp(task)) * 100 + "%";
-
-  const cells = task.component.children;
-
-  cells[1].textContent = task.level;
-  cells[2].textContent = formatTaskOutput(task);
-  cells[3].textContent = getXpGain(task.id);
-  cells[4].textContent = getXpLeft(task);
-  if (task.highestLevel > 0) cells[5].textContent = task.highestLevel;
-}
 
 function createEntity(id, state, component) {
   const stateObject = Object.assign(state, taskBaseState);
@@ -243,10 +222,6 @@ function selectTab(key) {
   }
 }
 
-function setTaskElements(task) {
-  task.element = createTaskRow(task.type, task.group, task.name);
-  task.fill = task.element.querySelector(".progressbar-fill");
-}
 function createTaskGroup(type, group) {
   const container = document.createElement("tbody");
   container.id = group;
@@ -270,14 +245,16 @@ function createHeaderRow(location, type, group) {
 
   return row;
 }
-function createTaskRow(type, group, name) {
+function createTaskRow(path) {
+  const [type, group, name] = path;
+
   const row = taskRowTemplate.content.firstElementChild.cloneNode(true);
   row.classList.add("row");
   row.classList.add(type + "-row");
 
   row
     .querySelector(".progressbar")
-    .addEventListener("click", () => selectTask(type, name));
+    .addEventListener("click", () => activateTask());
   row.querySelector(".progressbar-text").innerText =
     capitalizeFirstLetters(name);
 
@@ -291,11 +268,39 @@ function createTaskRow(type, group, name) {
 
 function update() {
   const daysElaspsed = 1;
-  tasks.active.forEach((task) => updateTask(task, daysElaspsed));
+
+  tasks.active.forEach((id) => updateTask(id, daysElaspsed));
 }
-function updateTask(task, daysElaspsed) {
-  increaseXp(task, daysElaspsed);
-  updateComponent(task);
+function updateTask(id, daysElaspsed) {
+  const TASK = getTask(id);
+
+  increaseXp(TASK, daysElaspsed);
+  updateComponent(TASK);
+}
+
+function increaseXp(task, daysElaspsed) {
+  let excess = task.xp + getXpGain(task.id) * daysElaspsed;
+  const MAX_XP = getMaxXp(task);
+
+  while (excess >= MAX_XP) {
+    excess -= MAX_XP;
+    task.level += 1;
+  }
+
+  task.xp = excess;
+}
+
+function updateComponent(task) {
+  task.component.querySelector(".progressbar-fill").style.width =
+    (task.xp / getMaxXp(task)) * 100 + "%";
+
+  const cells = task.component.children;
+
+  cells[1].textContent = task.level;
+  cells[2].textContent = formatTaskOutput(task);
+  cells[3].textContent = getXpGain(task.id);
+  cells[4].textContent = getXpLeft(task);
+  if (task.highestLevel > 0) cells[5].textContent = task.highestLevel;
 }
 
 // Data persistence
@@ -306,7 +311,10 @@ function saveData() {
 
   const data = {
     assets: assets,
-    tasks: tasks,
+    tasks: {
+      active: [...tasks.active],
+      available: [...tasks.available.entries()],
+    },
   };
 
   localStorage.setItem("data", window.btoa(JSON.stringify(data)));
@@ -317,7 +325,12 @@ function loadData(string) {
   if (!data) return true;
 
   assets = data["assets"];
-  tasks = data["tasks"];
+  tasks = {
+    active: new Set(data["tasks"].active),
+    available: new Map(data["tasks"].available),
+  };
+
+  tasks.available.forEach((task) => (task.component = getComponent("task")));
 
   return false;
 }
@@ -346,6 +359,34 @@ function exportData() {
   tabsCollection.wrapper = document.getElementById("tab-wrapper");
 
   // Add DOM events
+  setupEvents();
+
+  // Load Content
+  createTabs();
+
+  // Set base state
+  selectTab("skills");
+
+  // Generate base data
+  if (firstSession) setupData();
+
+  // Start loops
+  update();
+  setInterval(saveData, 1000 * 1);
+  // setInterval(update, 1000 / updateSpeed);
+})();
+
+function setupData() {
+  createTask("jobs/common/beggar");
+
+  createTask("skills/fundamentals/concentration");
+  createTask("skills/fundamentals/productivity");
+  createTask("skills/combat/strength");
+
+  activateTask("skills/fundamentals/concentration");
+  activateTask("jobs/common/beggar");
+}
+function setupEvents() {
   pauseButton.addEventListener("click", toggleGameFreeze);
   document
     .getElementById("import-button")
@@ -359,26 +400,4 @@ function exportData() {
   window.addEventListener("keypress", (event) => {
     if (event.code === "32") toggleGameFreeze();
   });
-
-  // Load Content
-  createTabs();
-
-  // Set base state
-  selectTab("skills");
-
-  // Generate base data
-  if (firstSession) {
-    createTask("jobs/common/beggar");
-
-    createTask("skills/fundamentals/concentration");
-    createTask("skills/fundamentals/productivity");
-    createTask("skills/combat/strength");
-
-    activateTask("skills/concentration");
-    activateTask("jobs/beggar");
-  }
-
-  // Start loops
-  setInterval(saveData, 1000 * 30);
-  setInterval(update, 1000 / updateSpeed);
-})();
+}
