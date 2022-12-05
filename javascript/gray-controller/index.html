@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>var exports = {};</script>
+    <script src="dist/main.js" defer></script>
+    <link rel="stylesheet" href="styles.css">
+    <title>Document</title>
+</head>
+
+<body>
+    <template id="task-row-template">
+        <div class="task-row">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </template>
+    <template id="tasklist-row-template">
+        <div class="tasklist-row">
+            <span></span>
+            <span></span>
+        </div>
+    </template>
+    <template id="group-row-template">
+        <div class="group-row">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </template>
+
+    <div id="tasks-container">
+        <header>
+            <h2>Tasks</h2>
+            <div>
+                <span>Name</span>
+                <span>Effect</span>
+                <span>Duration</span>
+            </div>
+        </header>
+        <ul id="tasks-list">
+
+        </ul>
+    </div>
+
+    <div id="main-group-container">
+        <div id="group-blueprints-container">
+            <header>
+                <h2>Group Blueprints</h2>
+                <div>
+                    <span>Name</span>
+                    <span>Tasks</span>
+                </div>
+            </header>
+            <ul id="group-blueprints-list">
+
+            </ul>
+        </div>
+        <div id="groups-container">
+            <header>
+                <h2>Groups</h2>
+                <div>
+                    <span>Task List</span>
+                    <span>ID</span>
+                    <span>Population</span>
+                    <span>Current Task</span>
+                </div>
+            </header>
+            <ul id="groups-list">
+
+            </ul>
+        </div>
+    </div>
+
+</body>
+
+</html>
