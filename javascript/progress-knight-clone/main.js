@@ -27,7 +27,9 @@ var tasks = {
   active: new Set(),
   available: new Map(),
 };
-
+var settings = {
+  numberNotation: "standard",
+};
 const multiplierMaps = {};
 
 const updateSpeed = 20;
@@ -38,6 +40,7 @@ function toggleGameFreeze() {
 
   pauseButton.innerText = paused ? "Play" : "Pause";
 }
+
 function capitalizeFirstLetters(string) {
   const text = string
     .split(" ")
@@ -51,90 +54,138 @@ function formatAge() {
   const days = Math.round(assets.age % 365);
   return `Age ${years} Day ${days}`;
 }
-function formatTaskOutput(task) {
-  const path = getPath(task.id);
-  switch (path[0]) {
+function format(number, decimals = 2) {
+  return {
+    standard: toStandard,
+    scientific: toScientific,
+    engineering: toEngineering,
+  }[settings.numberNotation].apply(null, [number]);
+
+  function toStandard(value) {
+    const suffixes = [
+      "",
+      "k",
+      "M",
+      "B",
+      "T",
+      "Qa",
+      "Qi",
+      "Sx",
+      "Sp",
+      "O",
+      "N",
+      "D",
+      "Ud",
+      "Dd",
+      "Td",
+      "Qad",
+      "Qid",
+      "Sxd",
+      "Spd",
+      "Od",
+      "Nd",
+      "V",
+      "Uv",
+      "Dv",
+      "Tv",
+      "Qav",
+      "Qiv",
+      "Sxv",
+      "Spv",
+      "Ov",
+      "Nv",
+      "Tr",
+      "Ut",
+      "Dt",
+      "Tt",
+    ];
+
+    const tier = Math.log10(number) | 0;
+    if (tier > suffixes.length) return toScientific(value);
+
+    let coefficent = (value / Math.pow(10, tier)).toFixed(decimals);
+
+    let suffix = suffixes[tier];
+
+    return coefficent + suffix;
+  }
+  function toScientific(value) {
+    return value.toExponential(decimals);
+  }
+  function toEngineering(value) {
+    // SI pre
+    const suffixes = ["", "k", "M", "G", "T", "P", "E", "Z", "Y"];
+
+    const tier = (Math.log(value) / Math.log(1000)) | 0;
+    if (tier > suffixes.length) return toScientific(value);
+
+    let coefficent = (value / Math.pow(1000, tier)).toFixed(decimals);
+
+    let suffix = suffixes[tier] || e;
+
+    return coefficent + suffix;
+  }
+}
+
+function formatTaskOutput(task, elem) {
+  const { level, multi, description } = task.state;
+
+  const type = getPath(task.id)[0];
+
+  switch (type) {
     case "skills":
-      return formatEffect(
-        1 + task.state.level * task.state.multi,
-        task.state.description
-      );
+      return formatEffect(1 + level * multi, description);
     case "jobs":
-      return formatMoney(task.state.multi);
+      if (elem.children.length === 0) elem.appendChild(initCoinText());
+
+      const format = formatCoins(multi);
+
+      for (let i = 0; i < elem.children.length; i++) {
+        elem.children[i].textContent = format[i];
+      }
+      return;
     default:
       break;
   }
 }
-function format(number, decimals = 1) {
-  const units = [
-    "",
-    "k",
-    "M",
-    "B",
-    "T",
-    "Qa",
-    "Qi",
-    "Sx",
-    "Sp",
-    "O",
-    "N",
-    "D",
-    "Ud",
-    "Dd",
-    "Td",
-    "Qad",
-    "Qid",
-    "Sxd",
-    "Spd",
-    "Od",
-    "Nd",
-    "V",
-    "Uv",
-    "Dv",
-    "Tv",
-    "Qav",
-    "Qiv",
-    "Sxv",
-    "Spv",
-    "Ov",
-    "Nv",
-    "Tr",
-    "Ut",
-    "Dt",
-    "Tt",
-  ];
 
-  // what tier? (determines SI symbol)
-  const tier = (Math.log10(number) / 3) | 0;
-  if (tier <= 0) return number.toFixed(decimals);
+function formatCoins(value) {
+  const platinum = (value / 1e6) | 0;
 
-  if (
-    (gameData.settings.numberNotation == 0 || tier < 3) &&
-    tier < units.length
-  ) {
-    // get suffix and determine scale
-    const suffix = units[tier];
-    const scale = Math.pow(10, tier * 3);
-    // scale the number
-    const scaled = number / scale;
-    // format number and add suffix
-    return scaled.toFixed(decimals) + suffix;
+  let formatted = [];
+  if (platinum < 1e4) {
+    const gold = ((value % 1e6) / 1e4) | 0;
+    const silver = ((value % 1e4) / 100) | 0;
+    const copper = value % 100 | 0;
+
+    const currencys = [platinum, gold, silver, copper];
+    const currencySuffix = ["p", "g", "s", "c"];
+
+    currencys.forEach((currency, index) => {
+      formatted.push(currency ? currency + currencySuffix[index] : undefined);
+    });
   } else {
-    if (gameData.settings.numberNotation == 1)
-      return number.toExponential(decimals).replace("e+", "e");
-    else
-      return math
-        .format(number, { notation: "engineering", precision: 3 })
-        .replace("e+", "e");
+    // Only largest denomination needs formatting
+    const notated = format(platinum, 0);
+    formatted[3] = notated + "p";
   }
-}
-function formatMoney(value) {
-  const platinum = Math.floor(value / 1e6);
-  const gold = Math.floor((value - platinum * 1e6) / 1e4);
-  const silver = Math.floor((value - platinum * 1e6 - gold * 1e4) / 100);
-  const copper = Math.floor(value - platinum * 1e6 - gold * 1e4 - silver * 100);
 
-  return value;
+  return formatted;
+}
+function initCoinText() {
+  const fragment = document.createDocumentFragment();
+
+  const units = ["platinum", "gold", "silver", "copper"];
+
+  for (let i = 0; i <= units.length - 1; i++) {
+    const unit = units[i];
+    const node = document.createElement("span");
+    node.style.color = `var(--${unit})`;
+
+    fragment.appendChild(node);
+  }
+
+  return fragment;
 }
 function formatEffect(value, effect) {
   return `x${value.toFixed(2)} ${capitalizeFirstLetters(effect)}`;
@@ -327,7 +378,6 @@ function createTaskRow(id) {
   const [type, group, name] = getPath(id);
 
   const row = taskRowTemplate.content.firstElementChild.cloneNode(true);
-  row.classList.add("row");
   row.classList.add(type + "-row");
 
   row
@@ -386,7 +436,7 @@ function updateRow(task) {
   const cells = task.component.children;
 
   cells[1].textContent = state.level;
-  cells[2].textContent = formatTaskOutput(task);
+  formatTaskOutput(task, cells[2]);
   cells[3].textContent = getXpGain(task.id).toFixed();
   cells[4].textContent = getXpLeft(state).toFixed();
   cells[5].textContent = state.highestLevel;
@@ -464,7 +514,8 @@ function exportData() {
   tasks.available.forEach((task) => initTask(task));
 
   // Start loops
-  setInterval(update, 1000 / updateSpeed);
+  update();
+  // setInterval(update, 1000 / updateSpeed);
   setInterval(saveData, 1000 * 30);
 })();
 
