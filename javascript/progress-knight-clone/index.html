@@ -5,16 +5,16 @@
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="dark.css" />
-  <script type="text/javascript" src="HackTimer.js"></script>
-  <script type="module" src="main.js" defer></script>
+  <link rel="stylesheet" href="styles/styles.css" />
+  <link rel="stylesheet" href="styles/dark.css" />
+  <script type="text/javascript" src="js/HackTimer.js"></script>
+  <script type="module" src="js/experimental.js" defer></script>
   <link rel="shortcut icon" href="images/logos.png">
-  <title>Progress Knight Clone</title>
+  <title>Progress Knight Refactored</title>
 </head>
 
 <body class="dark">
-  <template id="row-header-template">
+  <template id="task-header-row-template">
     <tr class="row-header">
       <td></td>
       <td>Level</td>
@@ -38,6 +38,51 @@
       <td></td>
       <td></td>
     </tr>
+  </template>
+  <template id="item-header-row-template">
+    <tr class="row-header">
+      <td></td>
+      <td>Active</td>
+      <td>Effect</td>
+      <td>Expense/day</td>
+    </tr>
+  </template>
+  <template id="item-row-template">
+    <tr>
+      <td>
+        <button class="item-button tooltip">
+          <span class="name"></span>
+          <span class="tooltip-text"></span>
+        </button>
+      </td>
+      <td>
+        <div class="circle-border" style="width: 40px; height: 40px; padding: 7px">
+          <div class="circle" style="width: 24px; height: 24px;"></div>
+        </div>
+      </td>
+      <td class="effect"></td>
+      <td class="expense">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </td>
+    </tr>
+  </template>
+  <template id="required-row-template">
+    <td class="requirment-text" colspan=5>
+      Required:
+      <span class="value" colspan=5>
+        <span class="levels"></span>
+        <span class="coins">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+        <span style="color: var(--evil)" class="evil"></span>
+      </span>
+    </td>
   </template>
 
   <div class="header">
@@ -63,7 +108,7 @@
       <div id="tab-wrapper">
         <nav role="tablist" id="navbar" class="panel">
           <!-- Dynamically filled with links from tab-content -->
-          <!-- tabSwitch() isnt in file scope so needs to be generated in js -->
+          <!-- tabSwitch() isnt in file scope so needs to be added in js -->
           <!-- Removes dependency so new tab-content can be added without worry -->
         </nav>
 

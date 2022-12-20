@@ -5,7 +5,7 @@ Thus a heavier usage of dynamic content in this refactor
 
 ---TODO---
 Shop
-Notation format
+X Notation format
 Required Rows
-Misc Assets
-Active Elements in sidebar
+X Misc Assets
+X Active Elements in sidebar

@@ -198,142 +198,72 @@ export const skillBaseData = Object.freeze({
   },
 });
 
-export const tasksBaseData = Object.freeze({
-  jobs: jobBaseData,
-  skills: skillBaseData,
-});
-export const taskBaseState = Object.freeze({
-  xp: 0,
-  level: 0,
-  highestLevel: 0,
-});
-
 export const itemBaseData = Object.freeze({
-  Properties: {
-    Homeless: { name: "Homeless", expense: 0, multi: 1 },
-    Tent: { name: "Tent", expense: 15, multi: 1.4 },
-    "Wooden hut": { name: "Wooden hut", expense: 100, multi: 2 },
-    Cottage: { name: "Cottage", expense: 750, multi: 3.5 },
-    House: { name: "House", expense: 3000, multi: 6 },
-    "Large house": { name: "Large house", expense: 25000, multi: 12 },
-    "Small Manor": { name: "Small Manor", expense: 300000, multi: 25 },
-    "Small palace": { name: "Small palace", expense: 5000000, multi: 60 },
-    "Grand palace": { name: "Grand palace", expense: 190000000, multi: 135 },
+  properties: {
+    homeless: { name: "Homeless", expense: 0, multi: 1 },
+    tent: { name: "Tent", expense: 15, multi: 1.4 },
+    "wooden hut": { name: "Wooden hut", expense: 100, multi: 2 },
+    cottage: { name: "Cottage", expense: 750, multi: 3.5 },
+    house: { name: "House", expense: 3000, multi: 6 },
+    "large house": { name: "Large house", expense: 25000, multi: 12 },
+    "small manor": { name: "Small Manor", expense: 300000, multi: 25 },
+    "small palace": { name: "Small palace", expense: 5000000, multi: 60 },
+    "grand palace": { name: "Grand palace", expense: 190000000, multi: 135 },
   },
-  Misc: {
-    "Rag Clothing": {
-      name: "Rag Clothing",
-      expense: 3,
-      multi: 1.5,
-      description: "Skill xp",
-    },
-    Book: { name: "Book", expense: 10, multi: 1.5, description: "Skill xp" },
-
-    Dumbbells: {
+  misc: {
+    book: { name: "Book", expense: 10, multi: 1.5, description: "skill xp" },
+    dumbbells: {
       name: "Dumbbells",
       expense: 50,
       multi: 1.5,
-      description: "Strength xp",
+      description: "strength xp",
     },
-    "Personal squire": {
-      name: "Personal squire",
+    "personal squire": {
+      name: "personal squire",
       expense: 200,
       multi: 2,
       description: "jobs xp",
     },
-    "Steel longsword": {
+    "steel longsword": {
       name: "Steel longsword",
       expense: 1000,
       multi: 2,
-      description: "Military xp",
+      description: "military xp",
     },
-    Butler: {
+    butler: {
       name: "Butler",
       expense: 7500,
       multi: 1.5,
-      description: "Happiness",
+      description: "happiness",
     },
-    "Sapphire charm": {
+    "sapphire charm": {
       name: "Sapphire charm",
       expense: 50000,
       multi: 3,
-      description: "Magic xp",
+      description: "magic xp",
     },
-    "Study desk": {
+    "study desk": {
       name: "Study desk",
       expense: 1000000,
       multi: 2,
-      description: "Skill xp",
+      description: "skill xp",
     },
-    Library: {
+    library: {
       name: "Library",
       expense: 12000000,
       multi: 1.5,
-      description: "Skill xp",
-    },
-    "Small Field": {
-      name: "Small Field",
-      expense: 130,
-      multi: 5.0,
-      description: "Farm upgrade",
-    },
-    "Ox-driven Plow": {
-      name: "Ox-driven Plow",
-      expense: 200,
-      multi: 2.4,
-      description: "Farm upgrade",
-    },
-    "Livestock-derived Fertilizer": {
-      name: "Livestock-derived Fertilizer",
-      expense: 20,
-      multi: 1.2,
-      description: "Farm upgrade",
-    },
-    "Cheap Fishing Rod": {
-      name: "Cheap Fishing Rod",
-      expense: 20,
-      multi: 2.0,
-      description: "Fishing upgrade",
-    },
-    "Miner's Lantern": {
-      name: "Miner's Lantern",
-      expense: 35,
-      multi: 1.5,
-      description: "Mining upgrade",
-    },
-    "Crappy Anvil": {
-      name: "Crappy Anvil",
-      expense: 50,
-      multi: 1.5,
-      description: "Blacksmith upgrade",
-    },
-    "Breech Bellows": {
-      name: "Breech Bellows",
-      expense: 130,
-      multi: 1.8,
-      description: "Blacksmith upgrade",
-    },
-    "Pack Horse": {
-      name: "Pack Horse",
-      expense: 80,
-      multi: 3.0,
-      description: "Merchant upgrade",
-    },
-    "Small Shop": {
-      name: "Small Shop",
-      expense: 600,
-      multi: 1.5,
-      description: "Merchant upgrade",
-    },
-    "Weapon Outlet": {
-      name: "Weapon Outlet",
-      expense: 3000,
-      multi: 3.0,
-      description: "Merchant upgrade",
+      description: "skill xp",
     },
   },
 });
-export const tooltips = {
+
+export const baseData = Object.freeze({
+  jobs: jobBaseData,
+  skills: skillBaseData,
+  items: itemBaseData,
+});
+
+export const tooltips = Object.freeze({
   //Common work
   Beggar:
     "Struggle day and night for a couple of copper coins. It feels like you are at the brink of death each day.",
@@ -568,14 +498,14 @@ export const tooltips = {
     "From the time the universe was born. Can create another small universes.",
   "Multiverse Fragment":
     "Came into existance long before our universe was created, this strange looking object with no shape radiates unlimited energy.",
-};
+});
 
 export const stylingData = Object.freeze({
-  description: {
+  descriptions: {
     jobs: "Income/day",
     skills: "Effect",
   },
-  task_color: {
+  colors: {
     common: "#55a630",
     fundamentals: "#55a630",
     military: "#e63946",
