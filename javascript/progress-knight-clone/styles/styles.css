@@ -76,7 +76,6 @@ td {
   background-color: white;
   text-align: center;
   width: 200px;
-  height: 40px;
   padding: 8px;
 }
 .item-button:hover {
@@ -177,4 +176,12 @@ td {
 }
 #navbar > a[aria-selected="true"] {
   background-color: #607d8b;
+}
+.item-signal {
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  background-color: white;
+  outline: 1px solid #ccc;
+  outline-offset: 8px;
 }

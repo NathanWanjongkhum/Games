@@ -1,4 +1,4 @@
-export const jobBaseData = Object.freeze({
+const jobBaseData = Object.freeze({
   common: {
     beggar: { name: "Beggar", xpScale: 50, multi: 5 },
     farmer: { name: "Farmer", xpScale: 100, multi: 9 },
@@ -43,7 +43,7 @@ export const jobBaseData = Object.freeze({
     },
   },
 });
-export const skillBaseData = Object.freeze({
+const skillBaseData = Object.freeze({
   fundamentals: {
     concentration: {
       name: "Concentration",
@@ -198,7 +198,7 @@ export const skillBaseData = Object.freeze({
   },
 });
 
-export const itemBaseData = Object.freeze({
+const itemBaseData = Object.freeze({
   properties: {
     homeless: { name: "Homeless", expense: 0, multi: 1 },
     tent: { name: "Tent", expense: 15, multi: 1.4 },
@@ -257,13 +257,13 @@ export const itemBaseData = Object.freeze({
   },
 });
 
-export const baseData = Object.freeze({
+const baseData = Object.freeze({
   jobs: jobBaseData,
   skills: skillBaseData,
   items: itemBaseData,
 });
 
-export const tooltips = Object.freeze({
+const tooltips = Object.freeze({
   //Common work
   Beggar:
     "Struggle day and night for a couple of copper coins. It feels like you are at the brink of death each day.",
@@ -500,11 +500,7 @@ export const tooltips = Object.freeze({
     "Came into existance long before our universe was created, this strange looking object with no shape radiates unlimited energy.",
 });
 
-export const stylingData = Object.freeze({
-  descriptions: {
-    jobs: "Income/day",
-    skills: "Effect",
-  },
+const stylingData = Object.freeze({
   colors: {
     common: "#55a630",
     fundamentals: "#55a630",

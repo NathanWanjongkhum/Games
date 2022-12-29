@@ -9,3 +9,10 @@ X Notation format
 Required Rows
 X Misc Assets
 X Active Elements in sidebar
+
+---Issues---
+Light mode
+Ease to add features
+Potentiaolly excessive updates in setMultipler()
+income could be calculated once per level instead of each frame (more memory)
+Something are calculated multiple times a frame when it could be once
