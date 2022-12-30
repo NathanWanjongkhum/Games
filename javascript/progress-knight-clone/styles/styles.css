@@ -68,7 +68,7 @@ td {
   height: 30px;
   background-color: rgb(46, 148, 231);
 }
-.current {
+.progressbar-fill.current {
   background-color: orange !important;
 }
 
@@ -126,6 +126,10 @@ td {
   left: 10px;
   font-size: 36px;
 }
+
+#age {
+  font-size: large;
+}
 #pause-button {
   display: inline-block;
   padding: 8px 16px;
@@ -168,7 +172,6 @@ td {
   vertical-align: middle;
   overflow: hidden;
   text-decoration: none;
-  color: inherit;
   background-color: inherit;
   text-align: center;
   cursor: pointer;
@@ -184,4 +187,7 @@ td {
   background-color: white;
   outline: 1px solid #ccc;
   outline-offset: 8px;
+}
+.item-signal.current {
+  background-color: #219ebc !important;
 }

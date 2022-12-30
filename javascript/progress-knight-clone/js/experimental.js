@@ -1,4 +1,4 @@
-// DOM Cache
+// Cache
 const taskHeaderRowTemplate = document.getElementById(
   "task-header-row-template"
 );
@@ -23,22 +23,22 @@ const tabsCollection = {
 
 // Game state
 var assets = {};
+var settings = {};
 
 var tasks = {};
 var items = {};
-var settings = {};
 
 var multiplierMaps = {};
 
 const updateSpeed = 20;
 
-// Service functions
 function toggleGameFreeze() {
   paused = !paused;
 
   pauseButton.innerText = paused ? "Play" : "Pause";
 }
 
+// Utility functions
 function capitalizeFirstLetters(string) {
   const text = string
     .split(" ")
@@ -48,6 +48,7 @@ function capitalizeFirstLetters(string) {
   return text;
 }
 
+// Text Formats
 function format(number, decimals = 2) {
   return {
     standard: toStandard,
@@ -124,43 +125,29 @@ function formatAge() {
   const days = Math.round(assets.age % 365);
   return `Age ${format(years, 0)} Day ${days}`;
 }
-function formatTaskOutput(task, elem) {
-  const { level, multi, description } = task.state;
-
-  const type = getPath(task.id)[0];
-
-  switch (type) {
-    case "skills":
-      elem.textContent = formatEffect(1 + level * multi, description);
-      break;
-    case "jobs":
-      if (elem.children.length === 0) elem.appendChild(initCoinText());
-
-      const format = formatCoins(multi);
-
-      for (let i = 0; i < elem.children.length; i++) {
-        elem.children[i].textContent = format[i];
-      }
-      break;
-    default:
-      break;
-  }
-}
 function formatCoins(value) {
+  let formatted = new Array(4);
+
   const platinum = (value / 1e6) | 0;
 
-  let formatted = [];
   if (platinum < 1e4) {
     const gold = ((value % 1e6) / 1e4) | 0;
-    const silver = ((value % 1e4) / 100) | 0;
-    const copper = value % 100 | 0;
+    const silver = ((value % 1e4) / 1e2) | 0;
+    const copper = value % 1e2 | 0;
 
     const currencys = [platinum, gold, silver, copper];
     const currencySuffix = ["p", "g", "s", "c"];
 
+    showZero = false;
     currencys.forEach((currency, index) => {
-      formatted.push(currency ? currency + currencySuffix[index] : undefined);
+      if (!currency && !showZero) return;
+      showZero = true;
+
+      const formattedCurrency = currency + currencySuffix[index];
+      formatted[index] = formattedCurrency;
     });
+
+    if (!showZero) formatted[3] = "0c"; // Catches value = 0
   } else {
     // Only largest denomination needs formatting
     const notated = format(platinum, 0);
@@ -191,22 +178,31 @@ function handleCoinText(container, coins) {
   const text = container.children;
 
   for (let i = 0; i < text.length; i++) {
-    text[i].textContent = formattedCoins[i] || "";
+    text[i].textContent = formattedCoins[i];
   }
 }
+function formatEffect(value, effect) {
+  return `x${format(value)} ${capitalizeFirstLetters(effect)}`;
+}
 
+// Multipler Handlers
 function setEffectMultiplier(effect, key, multiplier) {
   effect.set(key, multiplier);
   tasks.available.forEach((task) => task.render());
 }
-function getMultipliers(type, tags) {
-  const multipliers = tags.reduce((array, directory) => {
-    const bucket = multiplierMaps[directory];
-    if (!bucket || !bucket[type]) return array;
-
-    const multipliers = Array.from(bucket[type].values());
-    return array.concat(multipliers);
+function getAllMultipliers(tags, tagType) {
+  return tags.reduce((array, tag) => {
+    const multiplier = getMultiplier(tag, tagType);
+    return array.concat(multiplier);
   }, []);
+}
+function getMultiplier(tag, tagType) {
+  const bucket = multiplierMaps[tag];
+
+  if (!bucket || !bucket[tagType]) return [];
+  if (!tagType) return bucket;
+
+  const multipliers = Array.from(bucket[tagType].values());
 
   return multipliers;
 }
@@ -219,7 +215,18 @@ function getEffect(bucketName, effectName) {
 
   return effect;
 }
+function combineMultipliers(base, tagType, tags) {
+  // Consider splitting this code
+  const multipliers = getAllMultipliers(tags, tagType);
+  const result = multipliers.reduce(
+    (accumulator, multiplier) => accumulator * multiplier,
+    base
+  );
 
+  return result;
+}
+
+// Getters
 function getTask(id) {
   return tasks.available.get(id);
 }
@@ -227,7 +234,10 @@ function getItem(id) {
   return items.available.get(id);
 }
 
+// Tab Logic
 function createTabs() {
+  tabsCollection.wrapper = document.getElementById("tab-wrapper");
+
   tabsCollection.panels = Array.from(
     tabsCollection.wrapper.querySelectorAll("[role='tabpanel']")
   );
@@ -276,6 +286,7 @@ function selectTab(key) {
   }
 }
 
+// Activity Controller
 function selectTask(id) {
   const task = getTask(id);
   const taskType = task.path[0];
@@ -287,16 +298,39 @@ function selectTask(id) {
   if (previousTask) previousTask.progressbar.classList.remove("current");
   task.progressbar.classList.add("current");
 }
-
 function selectItem(id) {
-  const ITEM_REF = getItem(id);
-  tasks.active.add(ITEM_REF);
+  const item = getItem(id);
+  const itemGroup = item.path[1];
+
+  const previousItem = items.active.get(itemGroup);
+
+  if (item.state.description) {
+    const previousItems = Array.isArray(previousItem) ? previousItem : [];
+
+    if (previousItems.includes(item)) {
+      const i = previousItems.indexOf(item);
+
+      previousItems[i].signal.classList.remove("current");
+      previousItems.splice(i, 1);
+    } else {
+      items.active.set(itemGroup, [...previousItems, item]);
+
+      item.signal.classList.add("current");
+    }
+  } else {
+    items.active.set(itemGroup, item);
+
+    item.signal.classList.add("current");
+    if (previousItem) previousItem.signal.classList.remove("current");
+  }
 }
 
+// Cycle
 function update() {
   const daysElaspsed = 1;
 
   updateAge(daysElaspsed);
+  updateCoins(daysElaspsed);
 
   tasks.active.forEach((task) => task.update(daysElaspsed));
 }
@@ -305,6 +339,7 @@ function updateAge(daysElaspsed) {
   assets.age += daysElaspsed;
   ageText.textContent = formatAge();
 }
+function updateCoins(daysElaspsed) {}
 
 // Data persistence
 function saveData() {
@@ -370,19 +405,13 @@ function exportData() {
   importExportBox.value = window.btoa(JSON.stringify(data));
 }
 
+// Setup
 (function init() {
   localStorage.clear();
-  // Get saved data
   const firstSession = loadData(localStorage.getItem("data"));
 
-  // Get DOM
-  tabsCollection.wrapper = document.getElementById("tab-wrapper");
-
-  // Load Content
-  createTabs();
-
-  // Add Events
-  setupEvents();
+  createTabs(); // Load Content
+  setupEvents(); // Add Events
 
   if (firstSession) {
     setupData();
@@ -390,14 +419,11 @@ function exportData() {
 
     selectTask("beggar");
     selectTask("concentration");
+    selectItem("homeless");
   }
 
-  // Set base state
-  selectTab("jobs");
+  selectTab("shop");
 
-  tasks.available.forEach((task) => task.render());
-
-  // Start loops
   setInterval(update, 1000 / updateSpeed);
   setInterval(saveData, 1000 * 5);
 })();
@@ -410,11 +436,12 @@ function setupEntities() {
   new Skill("productivity");
   new Skill("strength");
   // /* Items */
-  // createItem("homeless");
-  // createItem("book");
+  new Item("homeless");
+  new Item("tent");
+  new Item("book");
 }
 function setupData() {
-  assets = { money: 0, age: 14 * 365, happiness: 1 };
+  assets = { coins: 0, age: 14 * 365, happiness: 1 };
   tasks = {
     active: new Map(),
     available: new Map(),

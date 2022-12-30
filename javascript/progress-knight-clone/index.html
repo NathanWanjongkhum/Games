@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles/styles.css" />
   <link rel="stylesheet" href="styles/dark.css" />
-  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> 
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
   <script type="text/javascript" src="js/BaseData.js" defer></script>
   <script type="text/javascript" src="js/classes.js" defer></script>
   <script type="text/javascript" src="js/experimental.js" defer></script>
@@ -60,36 +60,22 @@
         </button>
       </td>
       <td>
-          <div class="item-signal" style="width: 24px; height: 24px;"></div>
+        <div class="item-signal" style="width: 24px; height: 24px;"></div>
       </td>
       <td class="effect"></td>
-      <td class="expense">
-        <span></span>
-        <span></span>
-        <span></span>
-        <span></span>
-      </td>
+      <td class="expense"></td>
     </tr>
   </template>
   <template id="required-row-template">
     <td class="requirment-text" colspan=5>
       Required:
-      <span class="value" colspan=5>
-        <span class="levels"></span>
-        <span class="coins">
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-        </span>
-        <span style="color: var(--evil)" class="evil"></span>
-      </span>
+      <span class="requirments" colspan=5></span>
     </td>
   </template>
 
   <div class="header">
     <img src="images/logos.png" alt="logos" />
-    <h1>Progress Knight Clone</h1>
+    <h1>Progress Knight Refactored</h1>
   </div>
   <div id="main">
     <div id="info-panel" class="panel">
@@ -113,7 +99,6 @@
           <!-- tabSwitch() isnt in file scope so needs to be added in js -->
           <!-- Removes dependency so new tab-content can be added without worry -->
         </nav>
-
         <div role="tabpanel" aria-labelledby="jobs" class="panel">
           <table id="jobs-table"></table>
         </div>
@@ -124,6 +109,9 @@
           <table id="items-table"></table>
         </div>
         <div role="tabpanel" aria-labelledby="settings" class="panel" hidden>
+          <label>Original Game:</label>
+          <a style="color: #3366CC;"
+            href="https://ihtasham42.github.io/progress-knight/">https://ihtasham42.github.io/progress-knight/</a>
           <h2>Import/export save</h2>
           <button id="import-button">Import</button>
           <button id="export-button">Export</button>
@@ -135,7 +123,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </body>
 

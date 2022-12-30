@@ -1,6 +1,3 @@
-// Dependencies
-import { stylingData, baseData } from "./BaseData.js";
-
 // DOM Cache
 const taskHeaderRowTemplate = document.getElementById(
   "task-header-row-template"
@@ -26,11 +23,12 @@ const tabsCollection = {
 
 // Game state
 var assets = {};
+
 var tasks = {};
 var items = {};
 var settings = {};
 
-const multiplierMaps = {};
+var multiplierMaps = {};
 
 const updateSpeed = 20;
 
@@ -126,28 +124,6 @@ function formatAge() {
   const days = Math.round(assets.age % 365);
   return `Age ${format(years, 0)} Day ${days}`;
 }
-function formatTaskOutput(task, elem) {
-  const { level, multi, description } = task.state;
-
-  const type = getPath(task.id)[0];
-
-  switch (type) {
-    case "skills":
-      elem.textContent = formatEffect(1 + level * multi, description);
-      break;
-    case "jobs":
-      if (elem.children.length === 0) elem.appendChild(initCoinText());
-
-      const format = formatCoins(multi);
-
-      for (let i = 0; i < elem.children.length; i++) {
-        elem.children[i].textContent = format[i];
-      }
-      break;
-    default:
-      break;
-  }
-}
 function formatCoins(value) {
   const platinum = (value / 1e6) | 0;
 
@@ -171,7 +147,7 @@ function formatCoins(value) {
 
   return formatted;
 }
-function initCoinText() {
+function createCoinText() {
   const fragment = document.createDocumentFragment();
 
   const units = ["platinum", "gold", "silver", "copper"];
@@ -186,19 +162,23 @@ function initCoinText() {
 
   return fragment;
 }
-function formatEffect(value, effect) {
-  return `x${format(value)} ${capitalizeFirstLetters(effect)}`;
+function handleCoinText(container, coins) {
+  const formattedCoins = formatCoins(coins);
+
+  if (container.children.length === 0) container.appendChild(createCoinText());
+  const text = container.children;
+
+  for (let i = 0; i < text.length; i++) {
+    text[i].textContent = formattedCoins[i] || "";
+  }
 }
 
-function setMultiplier(state, id) {
-  const [bucketName, effectName] = state.description.split(" ");
-  const effect = validateMultiplier(bucketName, effectName);
-  effect.set(id, 1 + state.level * state.multi);
-
-  tasks.available.forEach((task) => updateTaskRow(task));
+function setEffectMultiplier(effect, key, multiplier) {
+  effect.set(key, multiplier);
+  tasks.available.forEach((task) => task.render());
 }
-function getMultipliers(type, path) {
-  const multipliers = path.reduce((array, directory) => {
+function getMultipliers(type, tags) {
+  const multipliers = tags.reduce((array, directory) => {
     const bucket = multiplierMaps[directory];
     if (!bucket || !bucket[type]) return array;
 
@@ -208,68 +188,14 @@ function getMultipliers(type, path) {
 
   return multipliers;
 }
-function validateMultiplier(bucketName, effectName) {
-  if (!multiplierMaps[bucketName]) multiplierMaps[bucketName] = {};
+function getEffect(bucketName, effectName) {
+  multiplierMaps[bucketName] = multiplierMaps[bucketName] ?? {};
   const bucket = multiplierMaps[bucketName];
 
-  if (!bucket[effectName]) bucket[effectName] = new Map();
+  bucket[effectName] = bucket[effectName] ?? new Map();
   const effect = bucket[effectName];
 
   return effect;
-}
-
-// State Handlers
-function getXpGain(path) {
-  const xpMultipliers = getMultipliers("xp", path);
-  const xpGain = xpMultipliers.reduce(
-    (accumulator, multiplier) => accumulator * multiplier,
-    10
-  );
-
-  return xpGain;
-}
-function getMaxXp(state) {
-  return Math.round(
-    state.xpScale * (state.level + 1) * Math.pow(1.01, state.level)
-  );
-}
-function getXpLeft(state) {
-  return Math.round(getMaxXp(state) - state.xp);
-}
-
-// Component Handlers
-function createTask(id) {
-  const PATH = getPath(id);
-
-  const task = {
-    id: id,
-    path: PATH,
-    state: {
-      ...getData(PATH),
-      ...{
-        xp: 0,
-        level: 0,
-        highestLevel: 0,
-      },
-    },
-    component: createRow(PATH),
-  };
-
-  tasks.available.set(task.id, task);
-
-  updateTaskRow(task);
-}
-function createItem(id) {
-  const PATH = getPath(id);
-
-  const item = {
-    id: id,
-    path: PATH,
-    state: getData(PATH),
-    component: createRow(PATH),
-  };
-
-  items.available.set(item.id, item);
 }
 
 function getTask(id) {
@@ -277,22 +203,6 @@ function getTask(id) {
 }
 function getItem(id) {
   return items.available.get(id);
-}
-function getData(path) {
-  console.log("data: ", path);
-  const [type, group, item] = path;
-  const state = baseData[type][group][item];
-  return state;
-}
-function getPath(id) {
-  // We assume depth and empty proto because tasksBaseData is immuitable
-  for (const [typeName, type] of Object.entries(baseData)) {
-    for (const [groupName, group] of Object.entries(type)) {
-      if (group.hasOwnProperty(id)) return [typeName, groupName, id];
-    }
-  }
-  console.log(baseData["items"]["misc"]);
-  console.log("Missing path: ", id);
 }
 
 function createTabs() {
@@ -318,121 +228,35 @@ function createTab(location, name) {
 
   location.appendChild(a);
 }
+
 function selectTab(key) {
-  try {
-    const selectedTabPanel = tabsCollection.panels.find(
-      (panel) => panel.getAttribute("aria-labelledby") === key
-    );
+  const selectedTabPanel = tabsCollection.panels.find(
+    (panel) => panel.getAttribute("aria-labelledby") === key
+  );
 
-    if (!selectedTabPanel) throw "unknown panel";
+  const selectedTab = tabsCollection.links.find(
+    (link) => link.getAttribute("id") === key
+  );
 
-    const selectedTab = tabsCollection.links.find(
-      (link) => link.getAttribute("id") === key
-    );
+  tabsCollection.panels.forEach((panel) => (panel.hidden = true));
+  tabsCollection.links.forEach((link) =>
+    link.setAttribute("aria-selected", false)
+  );
 
-    if (!selectedTabPanel) throw "unknown tab";
-
-    tabsCollection.panels.forEach((panel) => (panel.hidden = true));
-    tabsCollection.links.forEach((link) =>
-      link.setAttribute("aria-selected", false)
-    );
-
-    selectedTabPanel.hidden = false;
-    selectedTab.setAttribute("aria-selected", true);
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-function createGroup(type, group) {
-  const container = document.createElement("tbody");
-  container.id = group;
-
-  createHeaderRow(container, type, group);
-
-  const table = document.getElementById(type + "-table");
-  table.appendChild(container);
-
-  return container;
-}
-function createHeaderRow(location, type, group) {
-  const [template, content] = {
-    jobs: [taskHeaderRowTemplate, setupTaskContent],
-    skills: [taskHeaderRowTemplate, setupTaskContent],
-    items: [itemHeaderRowTemplate, setupItemContent],
-  }[type];
-
-  const row = template.content.firstElementChild.cloneNode(true);
-  row.style.backgroundColor = stylingData["colors"][group];
-
-  const children = row.children;
-  content();
-
-  location.appendChild(row);
-
-  return row;
-
-  function setupTaskContent() {
-    children[0].innerText = capitalizeFirstLetters(group);
-    children[2].innerText = stylingData["descriptions"][type];
-  }
-  function setupItemContent() {
-    children[0].innerText = capitalizeFirstLetters(group);
-  }
-}
-function createRow(path) {
-  const [type, group, name] = path;
-
-  const [template, customSetup] = {
-    jobs: [taskRowTemplate, setupTaskRow],
-    skills: [taskRowTemplate, setupTaskRow],
-    items: [itemRowTemplate, setupItemRow],
-  }[type];
-
-  const row = template.content.firstElementChild.cloneNode(true);
-  row.classList.add(type + "-row");
-
-  customSetup();
-
-  const rowGroup = document.getElementById(group) || createGroup(type, group);
-
-  rowGroup.appendChild(row);
-
-  return row;
-
-  function setupTaskRow() {
-    row
-      .querySelector(".progressbar")
-      .addEventListener("click", () => selectTask(name));
-    row.querySelector(".progressbar-text").innerText =
-      capitalizeFirstLetters(name);
-  }
-  function setupItemRow() {
-    const cell = row.children;
-    cell[0].textContent = capitalizeFirstLetters(name);
-  }
+  selectedTabPanel.hidden = false;
+  selectedTab.setAttribute("aria-selected", true);
 }
 
 function selectTask(id) {
-  const TASK_REF = getTask(id);
-  const PATH = TASK_REF.path;
+  const task = getTask(id);
+  const taskType = task.path[0];
 
-  const MATCHES = Array.from(tasks.active).filter(
-    ({ path }) => path[0] === PATH[0]
-  );
+  const previousTask = tasks.active.get(taskType);
 
-  MATCHES.forEach((task) => {
-    tasks.active.delete(task);
-    task.component
-      .querySelector(".progressbar-fill")
-      .classList.remove("current");
-  });
+  tasks.active.set(taskType, task);
 
-  getTask(PATH[2])
-    .component.querySelector(".progressbar-fill")
-    .classList.add("current");
-
-  tasks.active.add(TASK_REF);
+  if (previousTask) previousTask.progressbar.classList.remove("current");
+  task.progressbar.classList.add("current");
 }
 
 function selectItem(id) {
@@ -445,54 +269,15 @@ function update() {
 
   updateAge(daysElaspsed);
 
-  tasks.active.forEach((task) => updateTask(task, daysElaspsed));
+  tasks.active.forEach((task) => task.update(daysElaspsed));
 }
 
 function updateAge(daysElaspsed) {
   assets.age += daysElaspsed;
   ageText.textContent = formatAge();
 }
-function updateTask(task, daysElaspsed) {
-  increaseXp(task, daysElaspsed);
-  updateTaskRow(task);
-}
 
-function increaseXp(task, daysElaspsed) {
-  const state = task.state;
-  const MAX_XP = getMaxXp(state);
-
-  let excess = state.xp + getXpGain(task.path) * daysElaspsed;
-  const flag = excess >= MAX_XP;
-
-  while (excess >= MAX_XP) {
-    excess -= MAX_XP;
-    state.level += 1;
-  }
-
-  if (state.description && flag) setMultiplier(state, task.id);
-
-  state.xp = excess;
-}
-function updateTaskRow(task) {
-  const state = task.state;
-  task.component.querySelector(".progressbar-fill").style.width =
-    (state.xp / getMaxXp(state)) * 100 + "%";
-
-  const cells = task.component.children;
-
-  cells[1].textContent = state.level;
-  formatTaskOutput(task, cells[2]);
-  cells[3].textContent = getXpGain(task.path).toFixed();
-  cells[4].textContent = getXpLeft(state).toFixed();
-  cells[5].textContent = state.highestLevel;
-}
-
-// Data persistence
 function saveData() {
-  // These data structs are unrelated and shouldnt be packaged under a larger struct
-  // Instead we can develop with data seperated then bundle then before export
-  // Development-wise avoids traversing from a higher level and avoids confusion on relations
-
   const data = {
     assets: assets,
     tasks: formatTypeForSave(tasks),
@@ -552,6 +337,7 @@ function exportData() {
 }
 
 (function init() {
+  localStorage.clear();
   // Get saved data
   const firstSession = loadData(localStorage.getItem("data"));
 
@@ -568,14 +354,14 @@ function exportData() {
     setupData();
     setupEntities();
 
-    selectTask("concentration");
     selectTask("beggar");
+    selectTask("concentration");
   }
 
   // Set base state
-  selectTab("shop");
+  selectTab("jobs");
 
-  tasks.available.forEach((task) => updateTaskRow(task));
+  tasks.available.forEach((task) => task.render());
 
   // Start loops
   setInterval(update, 1000 / updateSpeed);
@@ -584,25 +370,23 @@ function exportData() {
 
 function setupEntities() {
   /* Jobs */
-  createTask("beggar");
-
-  /* Skills */
-  createTask("concentration");
-  createTask("productivity");
-  createTask("strength");
-
-  /* Items */
-  createItem("homeless");
-  createItem("book");
+  new Job("beggar");
+  // /* Skills */
+  new Skill("concentration");
+  new Skill("productivity");
+  new Skill("strength");
+  // /* Items */
+  // createItem("homeless");
+  // createItem("book");
 }
 function setupData() {
-  assets = { money: 0, age: 14 * 365, happiness: 1 };
+  assets = { coins: 0, age: 14 * 365, happiness: 1 };
   tasks = {
-    active: new Set(),
+    active: new Map(),
     available: new Map(),
   };
   items = {
-    active: new Set(),
+    active: new Map(),
     available: new Map(),
   };
   settings = { numberNotation: "standard" };

@@ -1,3 +1,6 @@
+// Classes are great for dynamic data
+// Some logic could be abstracted but additonal layers would be bloat and over-couple
+
 function getData(path) {
   const [type, group, item] = path;
   const state = baseData[type][group][item];
@@ -13,6 +16,7 @@ function getPath(id) {
   console.log("Missing path: ", id);
 }
 
+// Job & Skill are coupled because they have the same logic but different logic & rendering
 class Task {
   constructor(id) {
     this.id = id;
@@ -57,13 +61,7 @@ class Task {
   }
 
   combineMultipliers(tagType, base) {
-    const multipliers = getMultipliers(tagType, this.path);
-    const result = multipliers.reduce(
-      (accumulator, multiplier) => accumulator * multiplier,
-      base
-    );
-
-    return result;
+    return combineMultipliers(base, tagType, this.path);
   }
 
   addXp_(daysElaspsed) {
@@ -82,7 +80,8 @@ class Task {
     return leveledUp;
   }
   getXpGain() {
-    return this.combineMultipliers("xp", 10);
+    const xpGain = this.combineMultipliers("xp", 10);
+    return xpGain;
   }
   getMaxXp() {
     return Math.round(
@@ -145,7 +144,7 @@ class Job extends Task {
 
   update(daysElaspsed) {
     this.addXp(daysElaspsed);
-    assets.money += this.getIncome() * daysElaspsed;
+    assets.coins += this.getIncome() * daysElaspsed;
 
     this.render();
   }
@@ -165,20 +164,6 @@ class Skill extends Task {
     parent.appendChild(this.row);
   }
 
-  addXp(daysElaspsed) {
-    const leveledUp = this.addXp_(daysElaspsed);
-
-    if (leveledUp) {
-      const selfEffect = getEffect(this.id, "output");
-      const selfMultiplier = 1 + this.state.level / 100;
-      setEffectMultiplier(selfEffect, "level", selfMultiplier);
-
-      const outputEffect = getEffect(...this.state.description.split(" "));
-      const outputMultiplier = this.combineMultipliers("output", 1);
-      setEffectMultiplier(outputEffect, this.id, outputMultiplier);
-    }
-  }
-
   createGroup() {
     const container = this.createGroup_();
     container.appendChild(this.createHeaderRow());
@@ -194,9 +179,22 @@ class Skill extends Task {
     return row;
   }
 
-  formatEffect(value, effect) {
-    // console.log(value, effect, multiplierMaps);
-    return `x${format(value)} ${capitalizeFirstLetters(effect)}`;
+  addXp(daysElaspsed) {
+    const leveledUp = this.addXp_(daysElaspsed);
+
+    if (leveledUp) {
+      const skillEffect = getEffect(this.id, "output");
+      const levelMultiplier = this.getLevelMultiplier();
+      setEffectMultiplier(skillEffect, "level", levelMultiplier);
+
+      const outputEffect = getEffect(...this.state.description.split(" "));
+      const outputMultiplier = this.combineMultipliers("output", 1);
+      setEffectMultiplier(outputEffect, this.id, outputMultiplier);
+    }
+  }
+
+  getLevelMultiplier() {
+    return 1 + this.state.level / 100;
   }
 
   update(daysElaspsed) {
@@ -209,9 +207,137 @@ class Skill extends Task {
 
     this.render_(cell);
 
-    cell[2].textContent = this.formatEffect(
+    cell[2].textContent = formatEffect(
       this.combineMultipliers("output", 1),
       this.state.description
     );
+  }
+}
+
+class Item {
+  constructor(id) {
+    this.id = id;
+    this.path = getPath(id);
+
+    this.state = getData(this.path);
+
+    this.row = document
+      .getElementById("item-row-template")
+      .content.firstElementChild.cloneNode(true);
+
+    this.row
+      .querySelector(".item-button")
+      .addEventListener("click", () => selectItem(this.id));
+    this.row.querySelector(".name").textContent = this.state.name;
+
+    this.signal = this.row.querySelector(".item-signal");
+
+    const parent = document.getElementById(this.path[1]) || this.createGroup();
+    parent.appendChild(this.row);
+
+    items.available.set(this.id, this);
+
+    this.render();
+  }
+
+  createGroup() {
+    const container = document.createElement("tbody");
+    container.id = this.path[1];
+
+    container.appendChild(this.createHeaderRow());
+
+    const table = document.getElementById("items-table");
+    table.appendChild(container);
+
+    return container;
+  }
+  createHeaderRow() {
+    const row = itemHeaderRowTemplate.content.firstElementChild.cloneNode(true);
+    row.style.backgroundColor = stylingData["colors"][this.path[1]];
+
+    const cell = row.children;
+
+    cell[0].textContent = capitalizeFirstLetters(this.path[1]);
+
+    return row;
+  }
+
+  combineMultipliers(tagType, base) {
+    return combineMultipliers(base, tagType, this.path);
+  }
+
+  getExpense() {
+    const expenseMultipliers = getMultiplier("expenses");
+
+    const expense = expenseMultipliers.reduce(
+      (accumulator, multiplier) => accumulator * multiplier,
+      this.state.expense
+    );
+
+    return expense;
+  }
+
+  render() {
+    const cell = this.row.children;
+
+    cell[2].textContent = formatEffect(
+      this.combineMultipliers("output", this.state.multi),
+      this.state.description || "Happiness"
+    );
+
+    handleCoinText(cell[3], this.getExpense());
+  }
+}
+
+class Requirement {
+  constructor(id) {
+    this.id = id;
+    this.requirements = requirements[id];
+
+    this.row = document
+      .getElementById("required-row-template")
+      .content.firstElementChild.cloneNode(true);
+
+    this.requirementsText = [];
+  }
+
+  requirementSatisfied(key) {
+    delete this.requirements[key];
+  }
+  allRequirementsSatisfied() {}
+
+  render() {
+    for (const [key, value, index] of Object.entries(this.requirements)) {
+      let span = this.requirementsText[index];
+
+      if (!span) {
+        span = document.createElement("span");
+        this.requirementsText.push(span);
+      }
+
+      switch (key) {
+        case "coins":
+          value <= assets.coins
+            ? this.requirementSatisfied(key)
+            : handleCoinText(span, value);
+          break;
+        case "evil":
+          value <= assets.evil
+            ? this.requirementSatisfied(key)
+            : (span.textContent = format(value, 0) + "evil");
+          break;
+
+        default: /*task*/
+          const task = getTask(key);
+
+          // Task: X/Y
+          value <= task.state.level
+            ? this.requirementSatisfied()
+            : (span.textContent = `${capitalizeFirstLetters(key)}: ${
+                task.state.level
+              }/${value} `);
+          break;
+      }
+    }
   }
 }
