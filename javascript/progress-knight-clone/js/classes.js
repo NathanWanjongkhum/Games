@@ -31,7 +31,6 @@ class Task {
     this.row = document
       .getElementById("task-row-template")
       .content.firstElementChild.cloneNode(true);
-
     this.progressbar = this.row.querySelector(".progressbar-fill");
 
     this.row
@@ -41,6 +40,11 @@ class Task {
 
     tasks.available.set(this.id, this);
 
+    this.render();
+  }
+
+  loadData(data) {
+    Object.assign(this.state, data);
     this.render();
   }
 
@@ -240,6 +244,11 @@ class Item {
     this.render();
   }
 
+  loadData(data) {
+    Object.assign(this.state, data);
+    this.render();
+  }
+
   createGroup() {
     const container = document.createElement("tbody");
     container.id = this.path[1];
@@ -307,7 +316,7 @@ class Requirement {
   allRequirementsSatisfied() {}
 
   render() {
-    for (const [key, value, index] of Object.entries(this.requirements)) {
+    Object.entries(this.requirements).forEach(([key, value], index) => {
       let span = this.requirementsText[index];
 
       if (!span) {
@@ -338,6 +347,6 @@ class Requirement {
               }/${value} `);
           break;
       }
-    }
+    });
   }
 }

@@ -10,6 +10,10 @@ const itemRowTemplate = document.getElementById("item-row-template");
 const requiredRowTemplate = document.getElementById("required-row-template");
 
 const ageText = document.getElementById("age");
+
+const coinsDisplay = document.getElementById("coins-display");
+const incomeContainer = document.getElementById("income-info-container");
+
 const pauseButton = document.getElementById("pause-button");
 const navbar = document.getElementById("navbar");
 const importExportBox = document.getElementById("importExportBox");
@@ -136,7 +140,7 @@ function formatCoins(value) {
     const copper = value % 1e2 | 0;
 
     const currencys = [platinum, gold, silver, copper];
-    const currencySuffix = ["p", "g", "s", "c"];
+    const currencySuffix = ["p ", "g ", "s ", "c"];
 
     showZero = false;
     currencys.forEach((currency, index) => {
@@ -300,6 +304,7 @@ function selectTask(id) {
 }
 function selectItem(id) {
   const item = getItem(id);
+  console.log(item, id, items);
   const itemGroup = item.path[1];
 
   const previousItem = items.active.get(itemGroup);
@@ -339,7 +344,49 @@ function updateAge(daysElaspsed) {
   assets.age += daysElaspsed;
   ageText.textContent = formatAge();
 }
-function updateCoins(daysElaspsed) {}
+function updateCoins(daysElaspsed) {
+  assets.coins -= getExpenses() * daysElaspsed;
+
+  // Only needs when job or expense multi change
+  renderCoins();
+}
+
+function getExpenses() {
+  let expenses = 0;
+
+  items.active.forEach((item) => {
+    let expense = 0;
+    if (Array.isArray(item)) {
+      item.forEach((i) => (expense += i.getExpense()));
+    } else {
+      expense = item.getExpense();
+    }
+    expenses += expense;
+  });
+
+  items.active.forEach((item) => {
+    if (Array.isArray(item)) {
+      item.forEach((i) => i);
+    } else {
+    }
+  });
+
+  return expenses;
+}
+
+function renderCoins() {
+  handleCoinText(coinsDisplay, assets.coins);
+
+  const container = incomeContainer.querySelectorAll(".money");
+
+  const incomeGain = tasks.active.get("jobs").getIncome();
+  const incomeLoss = getExpenses();
+  const incomeNet = incomeGain - incomeLoss;
+
+  handleCoinText(container[0], incomeNet);
+  handleCoinText(container[1], incomeGain);
+  handleCoinText(container[2], incomeLoss);
+}
 
 // Data persistence
 function saveData() {
@@ -369,24 +416,35 @@ function loadData(string) {
   if (!data) return true;
 
   assets = data["assets"];
-  tasks = prepareType("tasks");
-  items = prepareType("items");
+  tasks = {
+    active: new Map(),
+    available: new Map(),
+  };
+  items = {
+    active: new Map(),
+    available: new Map(),
+  };
   settings = data["settings"];
 
-  tasks.available.forEach((task) => (task.component = createRow(task.path)));
-  data["tasks"].active.forEach(({ id }) => selectTask(id));
+  data["tasks"].available.forEach(([key, task]) => {
+    const type = task.path[0];
 
-  items.available.forEach((item) => (item.component = createRow(item.path)));
-  data["items"].active.forEach(({ id }) => selectItem(id));
+    const typeClass = {
+      jobs: Job,
+      skills: Skill,
+    };
+
+    new typeClass[type](key).loadData(task.state);
+  });
+  data["tasks"].active.forEach(([_, { id }]) => selectTask(id));
+
+  data["items"].available.forEach(([key, task]) =>
+    new Item(key).loadData(task)
+  );
+  console.log(data["items"]);
+  data["items"].active.forEach(([_, { id }]) => selectItem(id));
 
   return false;
-
-  function prepareType(key) {
-    return {
-      active: new Set(),
-      available: new Map(data[key].available),
-    };
-  }
 }
 function resetData() {
   localStorage.clear();
@@ -407,7 +465,6 @@ function exportData() {
 
 // Setup
 (function init() {
-  localStorage.clear();
   const firstSession = loadData(localStorage.getItem("data"));
 
   createTabs(); // Load Content

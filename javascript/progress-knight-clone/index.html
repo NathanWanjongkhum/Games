@@ -84,11 +84,24 @@
         <button id="pause-button">Pause</button>
         <ul id="automation"></ul>
       </div>
-      <div class="income-info-container">
-        <span id="income-net"></span>
-        <span id="income-gain"></span>
-        <span id="income-loss"></span>
+      <div style="font-size: large;" id="coins-display">
+      
       </div>
+      <div class="descriptive-text">Balance</div>
+      <ol id="income-info-container">
+        <li id="income-net">
+          <span style="color: #09a0e6;">Net/day</span>
+          <span class="money"></span>
+        </li>
+        <li id="income-gain">
+          <span style="color: green;">Income/day</span>
+          <span class="money"></span>
+        </li>
+        <li id="income-loss">
+          <span style="color: red;">Expense/day</span>
+          <span class="money"></span>
+        </li>
+      </ol>
       <!-- Active tasks (jobs, skills) dynamically added incase of additional instances -->
       <!-- New resources (evil, essence) dynamically added incase of additional instances -->
     </div>

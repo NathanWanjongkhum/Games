@@ -11,12 +11,16 @@
   --important-text-size: large;
   --normal-text-color: white;
   --normal-text-size: 15px;
-  --descriptive-text-size: gray;
+  --descriptive-text-color: gray;
   --descriptive-text-size: 15px;
 }
 
+.descriptive-text {
+  color: var(--descriptive-text-color);
+  font-size: var(--descriptive-text-size);
+}
 .requirment-text {
-  color: var(--descriptive-text-size);
+  color: var(--descriptive-text-color);
   padding-left: 16px;
 }
 
@@ -190,4 +194,7 @@ td {
 }
 .item-signal.current {
   background-color: #219ebc !important;
+}
+ol {
+  list-style-type: disc;
 }
